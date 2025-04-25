@@ -22,11 +22,7 @@ class ResearchRequest(BaseModel):
     topic: str = Field(..., min_length=5, max_length=100)
     format: Literal["summary", "bullet points", "short report"]
 
-    @validator("topic")
-    def validate_topic(cls, v):
-        if not v.strip():
-            raise ValueError("Topic must not be empty or whitespace.")
-        return v.strip()
+
 
 @app.post("/research")
 async def perform_research(payload: ResearchRequest):
