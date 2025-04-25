@@ -1,0 +1,53 @@
+name: ArXiv Research Task
+description: Researches a topic on ArXiv and formats the findings.
+input_schema:
+  type: object
+  required: [topic, output_format]
+  properties:
+    topic:
+      type: string
+      description: The research topic to search on ArXiv.
+    output_format:
+      type: string
+      description: The desired output format (e.g., 'summary', 'bullet points', 'short report').
+      enum: ['summary', 'bullet points', 'short report']
+
+tools:
+  - name: arxiv_search
+    type: integration
+    integration:
+      provider: arxiv
+
+main:
+  - name: search_arxiv
+    tool: arxiv_search
+    arguments:
+      query: $ steps[0].input.topic
+      max_results: 5
+      download_pdf: false
+      sort_by: relevance
+      sort_order: descending
+
+  - name: format_results
+    prompt:
+      - role: system
+        content: |
+          You are processing results from an ArXiv search.
+          Your goal is to synthesize the information based on the user's requested format.
+          Remember the constraints:
+          - Neutral, objective tone.
+          - Summary: 3-4 sentences.
+          - Bullet points: Max 5 concise points.
+          - Short report: Under 150 words.
+          - If search results are empty or irrelevant, state that clearly.
+      - role: user
+        content: |
+          Research Topic: {steps[0].input.topic}
+          Requested Output Format: {steps[0].input.output_format}
+
+          ArXiv Search Results:
+          ```json
+          {steps[0].output}
+          ```
+
+          Please analyze the provided ArXiv search results. Based *only* on these results, generate a response in the requested '{steps[0].input.output_format}' format. Adhere strictly to the formatting guidelines. If the results seem irrelevant or empty, please state that you couldn't find relevant information on ArXiv for the topic.
